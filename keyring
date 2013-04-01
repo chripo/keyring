@@ -36,7 +36,7 @@ if [[ -z $GPG_AGENT_PID || \
 then
     INIT=1
     gpg-agent --daemon -q --write-env-file "$GPG_INFO_FILE" -s &> /dev/null
-    chmod 600 "$GPG_INFO_FILE"
+    chmod 640 "$GPG_INFO_FILE"
     GPG_AGENT_PID=`grep -o 'GPG_AGENT_INFO.*:\(.*\):' "$GPG_INFO_FILE" | cut -d: -f2`
     echo "GPG_AGENT_PID=$GPG_AGENT_PID; export GPG_AGENT_PID;" >> "$GPG_INFO_FILE"
     _source_gpg_info
@@ -50,7 +50,7 @@ if [[ -z $SSH_AGENT_PID || \
 then
     INIT=1
     ssh-agent -s > "$SSH_INFO_FILE"
-    chmod 600 "$SSH_INFO_FILE"
+    chmod 640 "$SSH_INFO_FILE"
     echo "SSH_ASKPASS=$0; export SSH_ASKPASS;" >> "$SSH_INFO_FILE"
     _source_ssh_info
 fi
