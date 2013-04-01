@@ -56,6 +56,7 @@ then
 fi
 
 [ $# -eq 0 ] && print_exports && exit 0
+[ $INIT -eq 1 ] && sleep 1
 # }}}
 
 # options {{{
