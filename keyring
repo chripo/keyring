@@ -54,14 +54,18 @@ then
     echo "SSH_ASKPASS=$0; export SSH_ASKPASS;" >> "$SSH_INFO_FILE"
     _source_ssh_info
 fi
-
-[ $# -eq 0 ] && print_exports && exit 0
 [ $INIT -eq 1 ] && sleep 1
 # }}}
 
+[ $# -eq 0 ] && exit 0
+
 # options {{{
+if [ "$1" = '--eval' ] || [ "$1" = '-e' ]; then
+    shift
+    print_exports
+fi
+
 if [ "$1" = '--add' ] || [ "$1" = '-a' ]; then
-    [ $INIT -eq 1 ] && print_exports
     if [ $# -gt 1 ]; then
         shift
         echo "keyring +" >&2
@@ -69,6 +73,7 @@ if [ "$1" = '--add' ] || [ "$1" = '-a' ]; then
         exit $?
     fi
     echo "ArgumentError: missing keys" >&2
+    exit 1
 fi
 
 if [ "$1" = '--clear' ] || [ "$1" = '-c' ]; then
@@ -101,7 +106,9 @@ cat <<EOF
 keyring + https://git.christoph-polcin.com/keyring
 
 Usage:
-    keyring -a [--add] <KEY-PATH ...>
+    keyring -e [--eval] [ARGS]
+        foo
+    keyring -a [--add] keys...
         foo
     keyring -c [--clear]
         foo

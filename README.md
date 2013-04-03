@@ -41,12 +41,12 @@ contribute.
 Put the following lines into a shell resource file which gets sourced one time,
 eg. `~/.zlogin`, `~/.bash_login`, `~/.profile`, `~/.xinitrc`, ...
 
-    eval `keyring --add ~/.ssh/foo_key ~/.ssh/bar_key ~/.ssh/baz_key`
+    eval `keyring --eval --add ~/.ssh/foo_key ~/.ssh/bar_key ~/.ssh/baz_key`
 
 If you need Your keys in every shell session put the following line into
 Your default resource file, eg. `~/.bashrc´, `~./.zshrc`, ...
 
-    eval `keyring`
+    eval `keyring --eval`
 
 Below are all customizable environmental variables with their default values:
 
@@ -58,7 +58,7 @@ And here is an example how to adjust and submit those values.
 
     eval ` \
     PASS_KEY_PREFIX='foo' \
-    keyring`
+    keyring --eval`
 
 ### Your Keyring Database
 
