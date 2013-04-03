@@ -31,8 +31,8 @@ _source_ssh_info() {
 
 [ -e "$GPG_INFO_FILE" ] && _source_gpg_info
 
-if [ -z $GPG_AGENT_PID -o \
-    "$(ps x | grep -s 'gpg-agent' | grep -sc $GPG_AGENT_PID)" -lt '1' ]
+if [ -z $GPG_AGENT_PID ] || \
+        [ "$(ps x | grep -s 'gpg-agent' | grep -sc $GPG_AGENT_PID)" -lt '1' ]
 then
     INIT=1
     gpg-agent --daemon -q --write-env-file "$GPG_INFO_FILE" -s > /dev/null 2>&1
@@ -45,8 +45,8 @@ fi
 
 [ -e "$SSH_INFO_FILE" ] && _source_ssh_info
 
-if [ -z $SSH_AGENT_PID -o \
-    "$(ps x | grep -s 'ssh-agent' | grep -sc $SSH_AGENT_PID)" -lt '1' ]
+if [ -z $SSH_AGENT_PID ] || \
+        [ "$(ps x | grep -s 'ssh-agent' | grep -sc $SSH_AGENT_PID)" -lt '1' ]
 then
     INIT=1
     ssh-agent -s > "$SSH_INFO_FILE"
@@ -60,7 +60,7 @@ fi
 # }}}
 
 # options {{{
-if [ "$1" = '--add' -o "$1" = '-a' ]; then
+if [ "$1" = '--add' ] || [ "$1" = '-a' ]; then
     [ $INIT -eq 1 ] && print_exports
     if [ $# -gt 1 ]; then
         shift
@@ -71,13 +71,13 @@ if [ "$1" = '--add' -o "$1" = '-a' ]; then
     echo "ArgumentError: missing keys" >&2
 fi
 
-if [ "$1" = '--clear' -o "$1" = '-c' ]; then
+if [ "$1" = '--clear' ] || [ "$1" = '-c' ]; then
     ssh-add -D > /dev/null 2>&1
     pkill -SIGHUP gpg-agent > /dev/null 2>&1
     echo "All identities removed"
 fi
 
-if [ "$1" = '--kill' -o "$1" = '-k' ]; then
+if [ "$1" = '--kill' ] || [ "$1" = '-k' ]; then
     if [ $# -eq 2 -a "$2" = 'all' ]; then
         killall -9 ssh-agent
         killall -9 gpg-agent
@@ -90,13 +90,13 @@ if [ "$1" = '--kill' -o "$1" = '-k' ]; then
     exit 0
 fi
 
-if [ "$1" = '--list' -o "$1" = '-l' ]; then
+if [ "$1" = '--list' ] || [ "$1" = '-l' ]; then
     echo "SSH-Agent pid: $SSH_AGENT_PID"
     ssh-add -l
     echo "GPG-Agent pid: $GPG_AGENT_PID"
 fi
 
-if [ "$1" = '--help' -o "$1" = '-h' ]; then
+if [ "$1" = '--help' ] || [ "$1" = '-h' ]; then
 cat <<EOF
 keyring + https://git.christoph-polcin.com/keyring
 
