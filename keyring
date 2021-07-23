@@ -4,79 +4,67 @@
 
 set -e
 
-[ -z "$SSH_AUTH_SOCK" ] && echo export SSH_AUTH_SOCK && exit 1
-[ -z "$PASS_KEY_PREFIX" ] && PASS_KEY_PREFIX='keyring'
-
-SSH_ASKPASS="$0"
-export SSH_ASKPASS
-
-if [ ! -S "$SSH_AUTH_SOCK" ]
+if [ -z "${SSH_AUTH_SOCK}" ] || [ ! -S "${SSH_AUTH_SOCK}" ]
 then
-    ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null 2>&1 && sleep 1
+    SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+    export SSH_AUTH_SOCK
+    gpgconf --launch gpg-agent
+    sleep 1
 fi
 
-[ $# -eq 0 ] && exit 0
-
-if [ "$1" = '--eval' ] || [ "$1" = '-e' ]; then
+if [ "$1" = '--eval' ] || [ "$1" = '-e' ] || [ "$1" = 'eval' ]; then
     shift
-    echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;";
+    printf "SSH_AUTH_SOCK=%s\nexport SSH_AUTH_SOCK;\n" "$SSH_AUTH_SOCK"
 fi
 
-if [ "$1" = '--add' ] || [ "$1" = '-a' ]; then
-    if [ $# -gt 1 ]; then
+case "${1}" in
+    -a|--add|add)
         shift
-        echo "keyring +" >&2
-        ssh-add $@ </dev/null >&2
-        exit $?
-    fi
-    echo "ArgumentError: missing keys" >&2
-    exit 1
-fi
+        printf "keyring +\n" >&2
+        SSH_ASKPASS="${0}" ssh-add "${@:?'need argument: ~/.ssh/KEY...'}" </dev/null >&2
+    ;;
 
-if [ "$1" = '--clear' ] || [ "$1" = '-c' ]; then
-    ssh-add -D > /dev/null 2>&1
-    echo "All identities removed"
-    exit 0
-fi
+    -c|--clear|clear)
+        ssh-add -D > /dev/null 2>&1 && \
+            printf "All identities removed\n" >&2
+    ;;
 
-if [ "$1" = '--kill' ] || [ "$1" = '-k' ]
-then
-    killall ssh-agent && echo "ssh-agent killed"
-    exit 0
-fi
+    -k|--kill|kill)
+        killall gpg-agent && \
+            printf "gpg-agent killed\n" >&2
+    ;;
 
-if [ "$1" = '--list' ] || [ "$1" = '-l' ]; then
-    ssh-add -l
-    exit 0
-fi
+    -l|--list|list|ls)
+        ssh-add -l >&2
+    ;;
 
-if [ "$1" = '--help' ] || [ "$1" = '-h' ]; then
-cat <<EOF
-keyring + 
+    -h|--help|help)
+        cmd="$(basename "$0")"
+        cat <<EOF
+usage: ${cmd} [ --eval ] --add ~/.ssh/KEY... | --clear | --kill | --list
 
-Usage:
-    keyring -e [--eval] [ARGS]
-        
-    keyring -a [--add] keys...
-        
-    keyring -c [--clear]
-        
-    keyring -h [--help]
-        
-    keyring -k [--kill]
+ ${cmd} -e|--eval [ARGS]        Prints the SSH_AUTH_SOCK to stdout.
 
-    keyring -l [--list]
+ ${cmd} -a|--add ~/.ssh/KEY...  Adds identities.
 
-    keyring KEY:
+ ${cmd} -c|--clear              Removes all identities.
+
+ ${cmd} -k|--kill               Kills the current ssh-agent.
+
+ ${cmd} -l|--list               Lists all identities.
+
+ PASS_KEY_PREFIX: ${PASS_KEY_PREFIX:-keyring}
 EOF
-exit 0
-fi
+    ;;
 
-# retrieve passphrase for key (SSH_ASKPASS style)
-KEY=$( echo "$@" | sed -n 's/^.*[ \/]\([^\/].*\):\s*$/\1/p' )
-if [ ! -z "$KEY" ]
-then
-    pass show "$PASS_KEY_PREFIX/$KEY"
-else
-    exit 1
-fi
+    *)
+        # retrieves passphrase from pass via SSH_ASKPASS
+        KEY="$(printf "%s" "$*" | sed -n 's/^.*[ \/]\([^\/].*\):\s*$/\1/p')"
+        if [ -n "${KEY}" ]
+        then
+            pass show "${PASS_KEY_PREFIX:-keyring}/${KEY}"
+        else
+            exit 1
+        fi
+    ;;
+esac
