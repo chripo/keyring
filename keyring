@@ -2,67 +2,24 @@
 # https://git.christoph-polcin.com/keyring/
 # Simplified BSD License
 
-[ -z $GPG_INFO_FILE ] && GPG_INFO_FILE="/tmp/gpg-agent-info.$USER"
-[ -z $SSH_INFO_FILE ] && SSH_INFO_FILE="/tmp/ssh-agent-info.$USER"
-[ -z $PASS_KEY_PREFIX ] && PASS_KEY_PREFIX='keyring'
+set -e
 
-# GPG & SSH Agent setup {{{
-INIT=0
-print_exports() {
-    echo "GPG_AGENT_INFO=$GPG_AGENT_INFO; export GPG_AGENT_INFO;"
-    echo "GPG_AGENT_PID=$GPG_AGENT_PID; export GPG_AGENT_PID;"
-    echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;"
-    echo "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;"
-    echo "SSH_ASKPASS=$0; export SSH_ASKPASS;"
-}
+[ -z "$SSH_AUTH_SOCK" ] && echo export SSH_AUTH_SOCK && exit 1
+[ -z "$PASS_KEY_PREFIX" ] && PASS_KEY_PREFIX='keyring'
 
-_source_gpg_info() {
-    . "$GPG_INFO_FILE" > /dev/null 2>&1
-    export GPG_AGENT_INFO
-    export GPG_AGENT_PID
-}
+SSH_ASKPASS="$0"
+export SSH_ASKPASS
 
-_source_ssh_info() {
-    . "$SSH_INFO_FILE" > /dev/null 2>&1
-    export SSH_AUTH_SOCK
-    export SSH_AGENT_PID
-    export SSH_ASKPASS
-}
-
-[ -e "$GPG_INFO_FILE" ] && _source_gpg_info
-
-if [ -z $GPG_AGENT_PID ] || \
-        [ "$(ps x | grep -s 'gpg-agent' | grep -sc $GPG_AGENT_PID)" -lt '1' ]
+if [ ! -S "$SSH_AUTH_SOCK" ]
 then
-    INIT=1
-    gpg-agent --daemon -q --write-env-file "$GPG_INFO_FILE" -s > /dev/null 2>&1
-    chmod 640 "$GPG_INFO_FILE"
-    GPG_AGENT_PID=`grep -o 'GPG_AGENT_INFO.*:\(.*\):' "$GPG_INFO_FILE" | cut -d: -f2`
-    echo "GPG_AGENT_PID=$GPG_AGENT_PID; export GPG_AGENT_PID;" >> "$GPG_INFO_FILE"
-    _source_gpg_info
+    ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null 2>&1 && sleep 1
 fi
-
-
-[ -e "$SSH_INFO_FILE" ] && _source_ssh_info
-
-if [ -z $SSH_AGENT_PID ] || \
-        [ "$(ps x | grep -s 'ssh-agent' | grep -sc $SSH_AGENT_PID)" -lt '1' ]
-then
-    INIT=1
-    ssh-agent -s > "$SSH_INFO_FILE"
-    chmod 640 "$SSH_INFO_FILE"
-    echo "SSH_ASKPASS=$0; export SSH_ASKPASS;" >> "$SSH_INFO_FILE"
-    _source_ssh_info
-fi
-[ $INIT -eq 1 ] && sleep 1
-# }}}
 
 [ $# -eq 0 ] && exit 0
 
-# options {{{
 if [ "$1" = '--eval' ] || [ "$1" = '-e' ]; then
     shift
-    print_exports
+    echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;";
 fi
 
 if [ "$1" = '--add' ] || [ "$1" = '-a' ]; then
@@ -78,58 +35,48 @@ fi
 
 if [ "$1" = '--clear' ] || [ "$1" = '-c' ]; then
     ssh-add -D > /dev/null 2>&1
-    pkill -SIGHUP gpg-agent > /dev/null 2>&1
     echo "All identities removed"
+    exit 0
 fi
 
-if [ "$1" = '--kill' ] || [ "$1" = '-k' ]; then
-    if [ $# -eq 2 -a "$2" = 'all' ]; then
-        killall -9 ssh-agent
-        killall -9 gpg-agent
-        echo "All agents killed"
-    else
-        kill $SSH_AGENT_PID > /dev/null 2>&1
-        kill $GPG_AGENT_PID > /dev/null 2>&1
-        echo "My agents killed"
-    fi
+if [ "$1" = '--kill' ] || [ "$1" = '-k' ]
+then
+    killall ssh-agent && echo "ssh-agent killed"
     exit 0
 fi
 
 if [ "$1" = '--list' ] || [ "$1" = '-l' ]; then
-    echo "SSH-Agent pid: $SSH_AGENT_PID"
     ssh-add -l
-    echo "GPG-Agent pid: $GPG_AGENT_PID"
+    exit 0
 fi
 
 if [ "$1" = '--help' ] || [ "$1" = '-h' ]; then
 cat <<EOF
-keyring + https://git.christoph-polcin.com/keyring
+keyring + 
 
 Usage:
     keyring -e [--eval] [ARGS]
-        foo
+        
     keyring -a [--add] keys...
-        foo
+        
     keyring -c [--clear]
-        foo
+        
     keyring -h [--help]
-        foo
-    keyring -k [--kill] [all]
-        foo
-    keyring -l [--list]
-        foo
-    keyring KEY:
-        bar
-EOF
-fi
-# }}}
+        
+    keyring -k [--kill]
 
-# retrieve passphrase for key (SSH_ASKPASS style) {{{
+    keyring -l [--list]
+
+    keyring KEY:
+EOF
+exit 0
+fi
+
+# retrieve passphrase for key (SSH_ASKPASS style)
 KEY=$( echo "$@" | sed -n 's/^.*[ \/]\([^\/].*\):\s*$/\1/p' )
-if [ ! -z $KEY ]
+if [ ! -z "$KEY" ]
 then
     pass show "$PASS_KEY_PREFIX/$KEY"
 else
     exit 1
 fi
-# }}}
