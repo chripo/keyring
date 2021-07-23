@@ -1,8 +1,10 @@
-# Keyring
+Keyring
+=======
 
 A suckless [Keyring] build upon [pass].
 
-## Why?
+Why?
+===
 
 I was bored feeding my [SSH-Agent] with all my SSH-keys particularly
 their passphrases. Because of that i needed a tool which allows me
@@ -13,8 +15,8 @@ dependencies.
 
 Right! [Keyring] tries to solve a nibble of beggary.
 
-
-## Install
+Install
+=======
 
 [Keyring] depends on [GnuPG], [OpenSSH] and [pass] a suckless password manager.
 
@@ -24,9 +26,11 @@ Quick & Dirty Drop-In Style
     sudo install /tmp/keyring /usr/local/bin
 
 
-## Setup
+Setup
+=====
 
-### Basic Keyring Configuration
+Basic Keyring Configuration
+---------------------------
 
 Put the following lines into a shell resource file which gets sourced one time,
 eg. `~/.zlogin`, `~/.bash_login`, `~/.profile`, `~/.xinitrc`, ...
@@ -53,7 +57,8 @@ And here is an example how to adjust and submit those values.
 
 This will add all your keys pull their passphrases via `pass foo/KEY`.
 
-### Your Keyring Database
+Your Keyring Database
+---------------------
 
 To initialize the password store follow the instructions on the [pass] homepage
 or consider their [examples]
@@ -72,17 +77,20 @@ of the inserted key.
 To unlock the keyring You have to use the passphrase which is assigned with
 Your GPG-ID.
 
-## License
+License
+=======
 
 Simplified BSD License / FreeBSD License. See LICENSE for details.
 
 
-## Contribution welcome
+Contribution welcome
+====================
 
 Grab the source; get your hands dirty and file your patches or questions.
 
 
-## Notes
+Notes
+=====
 
 Backup and encrypt Your ~/.ssh directory:
 
