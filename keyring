@@ -40,8 +40,8 @@ EOF
         ;;
 
     -k|--kill|kill)
-        killall gpg-agent && \
-            printf "gpg-agent killed\n" >&2
+            gpg-connect-agent 'KILLAGENT' /bye
+        ;;
 
     -d|--del|del|--delete|delete)
         shift
