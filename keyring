@@ -32,6 +32,17 @@ case "${1}" in
     -k|--kill|kill)
         killall gpg-agent && \
             printf "gpg-agent killed\n" >&2
+
+    -d|--del|del|--delete|delete)
+        shift
+        for key in "${@:?KEY... to delete from agent}"
+        do
+            [ ! -e "${key}" ] && continue
+            fp="$(ssh-keygen -l -E sha256 -f "${key}" | cut -d' ' -f2 | cut -d: -f2)"
+            kid="$(gpg-connect-agent 'keyinfo --ssh-list --ssh-fpr=sha256' /bye | grep -- "${fp}" | cut -d' ' -f3)"
+            [ -z "${kid}" ] && printf 'key not in keyring: %s\n' "${fp}" && continue
+            gpg-connect-agent "delete_key --force ${kid}" /bye
+        done
     ;;
 
     -l|--list|list|ls)
@@ -50,6 +61,8 @@ usage: ${cmd} [ --eval ] --add ~/.ssh/KEY... | --clear | --kill | --list
  ${cmd} -c|--clear              Removes all identities.
 
  ${cmd} -k|--kill               Kills the current ssh-agent.
+
+ ${cmd} -d|--del ~/.ssh/KEY...  Removes identities from agent.
 
  ${cmd} -l|--list               Lists all identities.
 
