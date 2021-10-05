@@ -62,17 +62,17 @@ EOF
     -h|--help|help)
         cmd="$(basename "$0")"
         cat <<EOF
-usage: ${cmd} [ --eval ] --add ~/.ssh/KEY... | --clear | --kill | --list
+usage: ${cmd} [ --eval ] --add ~/.ssh/KEY... | --clear [--force] | --kill | --list
 
  ${cmd} -e|--eval [ARGS]        Prints the SSH_AUTH_SOCK to stdout.
 
  ${cmd} -a|--add ~/.ssh/KEY...  Adds identities.
 
- ${cmd} -c|--clear              Removes all identities.
+ ${cmd} -c|--clear [--force]    Removes all identities.
 
- ${cmd} -k|--kill               Kills the current ssh-agent.
+ ${cmd} -k|--kill               Kills the current agent.
 
- ${cmd} -d|--del ~/.ssh/KEY...  Removes identities from agent.
+ ${cmd} -d|--del ~/.ssh/KEY...  Removes identities.
 
  ${cmd} -l|--list               Lists all identities.
 
