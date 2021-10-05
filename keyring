@@ -49,9 +49,9 @@ EOF
         do
             [ ! -e "${key}" ] && continue
             fp="$(ssh-keygen -l -E sha256 -f "${key}" | cut -d' ' -f2 | cut -d: -f2)"
-            kid="$(gpg-connect-agent 'keyinfo --ssh-list --ssh-fpr=sha256' /bye | grep -- "${fp}" | cut -d' ' -f3)"
+            kid="$(gpg-connect-agent 'KEYINFO --ssh-list --ssh-fpr=sha256' /bye | grep -- "${fp}" | cut -s -d' ' -f3)"
             [ -z "${kid}" ] && printf 'key not in keyring: %s\n' "${fp}" && continue
-            gpg-connect-agent "delete_key --force ${kid}" /bye
+            gpg-connect-agent "DELETE_KEY --force ${kid}" /bye
         done
     ;;
 
