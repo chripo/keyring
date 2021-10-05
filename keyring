@@ -25,9 +25,19 @@ case "${1}" in
     ;;
 
     -c|--clear|clear)
-        ssh-add -D > /dev/null 2>&1 && \
-            printf "All identities removed\n" >&2
-    ;;
+        shift
+        [ "${1:-}" = "--force" ] && force="${1}" || force=""
+        while IFS= read -r kid
+        do
+            [ -z "${kid}" ] && continue
+            gpg-connect-agent "DELETE_KEY ${force} ${kid}" /bye || :
+        done <<EOF
+$(
+    gpg-connect-agent 'KEYINFO --ssh-list' /bye \
+        | cut -s -d' ' -f3
+)
+EOF
+        ;;
 
     -k|--kill|kill)
         killall gpg-agent && \
