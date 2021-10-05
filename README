@@ -3,8 +3,9 @@ Keyring
 
 A suckless [Keyring] build upon [pass].
 
+
 Why?
-===
+====
 
 I was bored feeding my [SSH-Agent] with all my SSH-keys particularly
 their passphrases. Because of that i needed a tool which allows me
@@ -14,6 +15,7 @@ Furthermore it has to fit well into my environment and tool chain because
 dependencies.
 
 Right! [Keyring] tries to solve a nibble of beggary.
+
 
 Install
 =======
@@ -55,7 +57,7 @@ And here is an example how to adjust and submit those values.
         --add $(find ~/.ssh/ -type f -name '*.pub' | sed 's/.pub//') \
      `
 
-This will add all your keys pull their passphrases via `pass foo/KEY`.
+This will add all your keys and pull their passphrases via `pass foo/KEY`.
 
 Your Keyring Database
 ---------------------
@@ -76,6 +78,7 @@ of the inserted key.
 
 To unlock the keyring You have to use the passphrase which is assigned with
 Your GPG-ID.
+
 
 License
 =======
